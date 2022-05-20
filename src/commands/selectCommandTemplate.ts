@@ -3,13 +3,12 @@
  *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { IActionContext, IAzureQuickPickItem, IAzureQuickPickOptions, UserCancelledError } from '@microsoft/vscode-azext-utils';
 import * as vscode from 'vscode';
-import { IActionContext, IAzureQuickPickItem, IAzureQuickPickOptions, UserCancelledError } from 'vscode-azureextensionui';
 import { ContextType } from '../docker/Contexts';
 import { ext } from '../extensionVariables';
 import { localize } from '../localize';
 import { resolveVariables } from '../utils/resolveVariables';
-import { dockerExePath, DefaultDockerPath } from '../utils/dockerExePathProvider';
 
 type TemplateCommand = 'build' | 'run' | 'runInteractive' | 'attach' | 'logs' | 'composeUp' | 'composeDown' | 'composeUpSubset';
 
@@ -98,7 +97,7 @@ export async function selectComposeCommand(context: IActionContext, folder: vsco
         template,
         [folder.name, configurationFile],
         folder,
-        { 'configurationFile': configurationFile ? `-f "${configurationFile}"` : '', 'detached': detached ? '-d' : '', 'build': build ? '--build' : '' }
+        { 'configurationFile': configurationFile ? `-f "${configurationFile}"` : '', 'detached': detached ? '-d' : '', 'build': build ? '--build' : '', 'composeCommand': await ext.dockerContextManager.getComposeCommand(context) }
     );
 }
 
@@ -166,16 +165,7 @@ export async function selectCommandTemplate(
     actionContext.telemetry.properties.commandContextType = `[${selectedTemplate.contextTypes?.join(', ') ?? ''}]`;
     actionContext.telemetry.properties.currentContextType = currentContextType;
 
-    let resolvedCommand = resolveVariables(selectedTemplate.template, folder, additionalVariables);
-
-    if (resolvedCommand.startsWith(DefaultDockerPath + ' ')) {
-        const dockerPath = dockerExePath(actionContext);
-        if (dockerPath !== DefaultDockerPath) {
-            resolvedCommand = dockerPath + resolvedCommand.substring(DefaultDockerPath.length);
-        }
-    }
-
-    return resolvedCommand;
+    return resolveVariables(selectedTemplate.template, folder, additionalVariables);
 }
 
 async function quickPickTemplate(templates: CommandTemplate[], templatePicker: TemplatePicker): Promise<CommandTemplate> {

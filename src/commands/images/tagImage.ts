@@ -3,8 +3,8 @@
  *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { IActionContext, TelemetryProperties } from '@microsoft/vscode-azext-utils';
 import * as vscode from 'vscode';
-import { IActionContext, TelemetryProperties } from 'vscode-azureextensionui';
 import { ext } from '../../extensionVariables';
 import { localize } from '../../localize';
 import { ImageTreeItem } from '../../tree/images/ImageTreeItem';
@@ -47,9 +47,10 @@ export async function getTagFromUserInput(context: IActionContext, fullTag: stri
 
 const KnownRegistries: { type: string, regex: RegExp }[] = [
     // Like username/path
-    { type: 'dockerhub-namespace', regex: /^[^.:]+\/[^.:]+\/$/ },
+    { type: 'dockerhub-namespace', regex: /^[^.:]+\/[^.:]+$/ },
 
     { type: 'dockerhub-dockerio', regex: /^docker.io.*\// },
+    { type: 'github', regex: /ghcr\.io.*\// },
     { type: 'gitlab', regex: /gitlab.*\// },
     { type: 'ACR', regex: /azurecr\.io.*\// },
     { type: 'GCR', regex: /gcr\.io.*\// },

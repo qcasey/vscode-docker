@@ -5,7 +5,7 @@
 
 import { URL } from 'url';
 import { ociClientId } from '../../../constants';
-import { bearerAuthHeader, getWwwAuthenticateContext, HttpErrorResponse, httpRequest, IOAuthContext, RequestLike, RequestOptionsLike } from '../../../utils/httpRequest';
+import { HttpErrorResponse, IOAuthContext, RequestLike, RequestOptionsLike, bearerAuthHeader, getWwwAuthenticateContext, httpRequest } from '../../../utils/httpRequest';
 
 export interface ImageRegistry {
     registryMatch: RegExp;
@@ -24,6 +24,7 @@ export const registries: ImageRegistry[] = [
                 try {
                     const options: RequestOptionsLike = {
                         headers: {
+                            // eslint-disable-next-line @typescript-eslint/naming-convention
                             'X-Meta-Source-Client': ociClientId,
                         },
                     };
@@ -41,6 +42,7 @@ export const registries: ImageRegistry[] = [
             const authRequestOptions: RequestOptionsLike = {
                 method: 'GET',
                 headers: {
+                    // eslint-disable-next-line @typescript-eslint/naming-convention
                     'X-Meta-Source-Client': ociClientId,
                     service: dockerHubAuthContext.service,
                     scope: scope,

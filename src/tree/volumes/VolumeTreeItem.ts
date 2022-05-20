@@ -3,15 +3,22 @@
  *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { AzExtParentTreeItem, IActionContext } from "@microsoft/vscode-azext-utils";
 import { MarkdownString, ThemeIcon } from "vscode";
-import { AzExtParentTreeItem, IActionContext } from "vscode-azureextensionui";
 import { DockerVolume } from "../../docker/Volumes";
 import { ext } from "../../extensionVariables";
 import { getTreeId } from "../LocalRootTreeItemBase";
 import { resolveTooltipMarkdown } from "../resolveTooltipMarkdown";
 import { ToolTipTreeItem } from "../ToolTipTreeItem";
 
-export class VolumeTreeItem extends ToolTipTreeItem {
+/**
+ * This interface defines properties used by the Remote Containers extension. These properties must not be removed from this class.
+ */
+interface VolumeTreeItemUsedByRemoteContainers {
+    readonly volumeName: string;
+}
+
+export class VolumeTreeItem extends ToolTipTreeItem implements VolumeTreeItemUsedByRemoteContainers {
     public static contextValue: string = 'volume';
     public contextValue: string = VolumeTreeItem.contextValue;
     private readonly _item: DockerVolume;

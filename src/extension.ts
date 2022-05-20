@@ -4,15 +4,14 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { TelemetryEvent } from '@microsoft/compose-language-service/lib/client/TelemetryEvent';
+import { IActionContext, UserCancelledError, callWithTelemetryAndErrorHandling, createAzExtOutputChannel, createExperimentationService, registerErrorHandler, registerEvent, registerReportIssueCommand, registerUIExtensionVariables } from '@microsoft/vscode-azext-utils';
 import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { callWithTelemetryAndErrorHandling, createAzExtOutputChannel, createExperimentationService, IActionContext, registerErrorHandler, registerEvent, registerReportIssueCommand, registerUIExtensionVariables, UserCancelledError } from 'vscode-azureextensionui';
 import { ConfigurationParams, DidChangeConfigurationNotification, DocumentSelector, LanguageClient, LanguageClientOptions, Middleware, ServerOptions, TransportKind } from 'vscode-languageclient/node';
 import * as tas from 'vscode-tas-client';
 import { registerCommands } from './commands/registerCommands';
-import { extensionVersion } from './constants';
 import { registerDebugProvider } from './debugging/DebugHelper';
 import { DockerContextManager } from './docker/ContextManager';
 import { ContainerFilesProvider } from './docker/files/ContainerFilesProvider';
@@ -63,18 +62,12 @@ export async function activateInternal(ctx: vscode.ExtensionContext, perfStats: 
 
         // All of these internally handle telemetry opt-in
         ext.activityMeasurementService = new ActivityMeasurementService(ctx.globalState);
+        ext.experimentationService = await createExperimentationService(
+            ctx,
+            process.env.VSCODE_DOCKER_TEAM === '1' ? tas.TargetPopulation.Team : undefined // If VSCODE_DOCKER_TEAM isn't set, let @microsoft/vscode-azext-utils decide target population
+        );
 
-        let targetPopulation: tas.TargetPopulation;
-        if (process.env.DEBUGTELEMETRY || process.env.VSCODE_DOCKER_TEAM === '1') {
-            targetPopulation = tas.TargetPopulation.Team;
-        } else if (/alpha/ig.test(extensionVersion.value)) {
-            targetPopulation = tas.TargetPopulation.Insiders;
-        } else {
-            targetPopulation = tas.TargetPopulation.Public;
-        }
-        ext.experimentationService = await createExperimentationService(ctx, targetPopulation);
-
-        // Temporarily disabled--reenable if we need to do any surveys
+        // Disabled for now
         // (new SurveyManager()).activate();
 
         // Remove the "Report Issue" button from all error messages in favor of the command
@@ -204,7 +197,9 @@ namespace Configuration {
                     e.affectsConfiguration('docker.certPath') ||
                     e.affectsConfiguration('docker.tlsVerify') ||
                     e.affectsConfiguration('docker.machineName') ||
-                    e.affectsConfiguration('docker.dockerodeOptions')) {
+                    e.affectsConfiguration('docker.dockerodeOptions') ||
+                    e.affectsConfiguration('docker.dockerPath') ||
+                    e.affectsConfiguration('docker.composeCommand')) {
                     await ext.dockerContextManager.refresh();
                 }
             }

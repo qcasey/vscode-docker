@@ -3,10 +3,10 @@
  *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { AzExtParentTreeItem, AzExtTreeItem, IActionContext } from "vscode-azureextensionui";
+import { AzExtParentTreeItem, AzExtTreeItem, IActionContext } from "@microsoft/vscode-azext-utils";
 import { dockerHubUrl } from "../../../constants";
 import { ext } from "../../../extensionVariables";
-import { bearerAuthHeader, RequestLike } from "../../../utils/httpRequest";
+import { RequestLike, bearerAuthHeader } from "../../../utils/httpRequest";
 import { nonNullProp } from "../../../utils/nonNull";
 import { registryRequest } from "../../../utils/registryRequestUtils";
 import { getThemedIconPath } from "../../getThemedIconPath";
@@ -89,6 +89,7 @@ export class DockerHubAccountTreeItem extends AzExtParentTreeItem implements IRe
         this._token = undefined;
         const url = 'v2/users/login';
         const body = { username: this.username, password: await this.getPassword() };
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         const response = await registryRequest<IToken>(this, 'POST', url, { body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } });
         this._token = response.body.token;
     }

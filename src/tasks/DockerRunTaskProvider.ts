@@ -5,16 +5,16 @@
 
 import { Task } from 'vscode';
 import { DockerPlatform } from '../debugging/DockerPlatformHelper';
+import { ext } from '../extensionVariables';
 import { localize } from '../localize';
 import { cloneObject } from '../utils/cloneObject';
 import { CommandLineBuilder } from '../utils/commandLineBuilder';
-import { dockerExePath } from '../utils/dockerExePathProvider';
-import { DockerRunOptions, DockerContainerVolume } from './DockerRunTaskDefinitionBase';
+import { DockerContainerVolume, DockerRunOptions } from './DockerRunTaskDefinitionBase';
 import { DockerTaskProvider } from './DockerTaskProvider';
 import { NetCoreRunTaskDefinition } from './netcore/NetCoreTaskHelper';
 import { NodeRunTaskDefinition } from './node/NodeTaskHelper';
 import { defaultVsCodeLabels, getAggregateLabels } from './TaskDefinitionBase';
-import { DockerRunTaskContext, getAssociatedDockerBuildTask, TaskHelper, throwIfCancellationRequested } from './TaskHelper';
+import { DockerRunTaskContext, TaskHelper, getAssociatedDockerBuildTask, throwIfCancellationRequested } from './TaskHelper';
 
 export interface DockerRunTaskDefinition extends NetCoreRunTaskDefinition, NodeRunTaskDefinition {
     label?: string;
@@ -83,7 +83,7 @@ export class DockerRunTaskProvider extends DockerTaskProvider {
 
     private async resolveCommandLine(runOptions: DockerRunOptions): Promise<CommandLineBuilder> {
         return CommandLineBuilder
-            .create(dockerExePath(), 'run', '-dt')
+            .create(ext.dockerContextManager.getDockerCommand(), 'run', '-dt')
             .withFlagArg('-P', runOptions.portsPublishAll || (runOptions.portsPublishAll === undefined && (runOptions.ports === undefined || runOptions.ports.length < 1)))
             .withNamedArg('--name', runOptions.containerName)
             .withNamedArg('--network', runOptions.network)

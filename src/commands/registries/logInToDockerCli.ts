@@ -3,15 +3,14 @@
  *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
+import { IActionContext, parseError } from '@microsoft/vscode-azext-utils';
 import * as vscode from 'vscode';
-import { IActionContext, parseError } from 'vscode-azureextensionui';
 import { NULL_GUID } from '../../constants';
 import { ext } from '../../extensionVariables';
 import { localize } from "../../localize";
 import { registryExpectedContextValues } from '../../tree/registries/registryContextValues';
 import { RegistryTreeItemBase } from '../../tree/registries/RegistryTreeItemBase';
 import { CommandLineBuilder } from '../../utils/commandLineBuilder';
-import { dockerExePath } from '../../utils/dockerExePathProvider';
 import { execAsync } from '../../utils/spawnAsync';
 
 export async function logInToDockerCli(context: IActionContext, node?: RegistryTreeItemBase): Promise<void> {
@@ -40,7 +39,7 @@ export async function logInToDockerCli(context: IActionContext, node?: RegistryT
         };
 
         await vscode.window.withProgress(progressOptions, async () => {
-            let command = CommandLineBuilder.create(dockerExePath(context), 'login');
+            let command = CommandLineBuilder.create(ext.dockerContextManager.getDockerCommand(context), 'login');
 
             if (creds.registryPath) {
                 command = command.withQuotedArg(creds.registryPath);

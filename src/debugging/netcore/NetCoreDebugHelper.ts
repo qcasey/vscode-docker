@@ -5,25 +5,24 @@
 
 import * as fse from 'fs-extra';
 import * as path from 'path';
+import { DialogResponses, IActionContext, UserCancelledError } from '@microsoft/vscode-azext-utils';
 import { DebugConfiguration, MessageItem, ProgressLocation, window } from 'vscode';
-import { DialogResponses, IActionContext, UserCancelledError } from 'vscode-azureextensionui';
 import { DockerOSType } from '../../docker/Common';
 import { ext } from '../../extensionVariables';
 import { localize } from '../../localize';
 import { NetCoreTaskHelper, NetCoreTaskOptions } from '../../tasks/netcore/NetCoreTaskHelper';
 import { ContainerTreeItem } from '../../tree/containers/ContainerTreeItem';
 import { CommandLineBuilder } from '../../utils/commandLineBuilder';
-import { dockerExePath } from '../../utils/dockerExePathProvider';
 import { getNetCoreProjectInfo } from '../../utils/netCoreUtils';
 import { getDockerOSType, isArm64Mac } from '../../utils/osUtils';
 import { pathNormalize } from '../../utils/pathNormalize';
 import { PlatformOS } from '../../utils/platform';
 import { unresolveWorkspaceFolder } from '../../utils/resolveVariables';
 import { execAsync } from '../../utils/spawnAsync';
-import { DebugHelper, DockerDebugContext, DockerDebugScaffoldContext, inferContainerName, ResolvedDebugConfiguration, resolveDockerServerReadyAction } from '../DebugHelper';
+import { DebugHelper, DockerDebugContext, DockerDebugScaffoldContext, ResolvedDebugConfiguration, inferContainerName, resolveDockerServerReadyAction } from '../DebugHelper';
 import { DockerAttachConfiguration, DockerDebugConfiguration } from '../DockerDebugConfigurationProvider';
 import { exportCertificateIfNecessary, getHostSecretsFolders, trustCertificateIfNecessary } from './AspNetSslHelper';
-import { installDebuggersIfNecessary, vsDbgInstallBasePath, VsDbgType } from './VsDbgHelper';
+import { VsDbgType, installDebuggersIfNecessary, vsDbgInstallBasePath } from './VsDbgHelper';
 
 export interface NetCoreDebugOptions extends NetCoreTaskOptions {
     appOutput?: string;
@@ -120,7 +119,7 @@ export class NetCoreDebugHelper implements DebugHelper {
                 removeContainerAfterDebug: debugConfiguration.removeContainerAfterDebug
             },
             pipeTransport: {
-                pipeProgram: dockerExePath(context.actionContext),
+                pipeProgram: ext.dockerContextManager.getDockerCommand(context.actionContext),
                 /* eslint-disable no-template-curly-in-string */
                 pipeArgs: ['exec', '-i', containerName, '${debuggerCommand}'],
                 pipeCwd: '${workspaceFolder}',
@@ -131,6 +130,7 @@ export class NetCoreDebugHelper implements DebugHelper {
                 quoteArgs: false,
             },
             sourceFileMap: debugConfiguration.sourceFileMap || {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 '/app/Views': path.join(path.dirname(debugConfiguration.netCore.appProject), 'Views'),
             }
         };
@@ -165,7 +165,7 @@ export class NetCoreDebugHelper implements DebugHelper {
             // and processName will be undefined.
             processName: debugConfiguration.processId ? undefined : debugConfiguration.processName || 'dotnet',
             pipeTransport: {
-                pipeProgram: dockerExePath(context.actionContext),
+                pipeProgram: ext.dockerContextManager.getDockerCommand(context.actionContext),
                 pipeArgs: ['exec', '-i', containerName],
                 // eslint-disable-next-line no-template-curly-in-string
                 pipeCwd: '${workspaceFolder}',
@@ -173,7 +173,7 @@ export class NetCoreDebugHelper implements DebugHelper {
                 quoteArgs: false,
             },
             sourceFileMap: debugConfiguration.sourceFileMap || {
-                // eslint-disable-next-line no-template-curly-in-string
+                // eslint-disable-next-line no-template-curly-in-string, @typescript-eslint/naming-convention
                 '/src': '${workspaceFolder}'
             }
         };
@@ -297,7 +297,7 @@ export class NetCoreDebugHelper implements DebugHelper {
             title: localize('vscode-docker.debug.netcore.copyDebugger', 'Copying the .NET Core debugger to the container ({0} --> {1})...', vsDbgInstallBasePath, containerDebuggerDirectory),
         }, async () => {
             const command = CommandLineBuilder
-                .create(dockerExePath(context), 'cp')
+                .create(ext.dockerContextManager.getDockerCommand(context), 'cp')
                 .withQuotedArg(vsDbgInstallBasePath)
                 .withQuotedArg(containerDebuggerPath)
                 .build();
@@ -307,7 +307,7 @@ export class NetCoreDebugHelper implements DebugHelper {
 
     private async isDebuggerInstalled(containerName: string, debuggerPath: string, containerOS: DockerOSType): Promise<boolean> {
         const command = CommandLineBuilder
-            .create(dockerExePath(), 'exec', '-i')
+            .create(ext.dockerContextManager.getDockerCommand(), 'exec', '-i')
             .withQuotedArg(containerName)
             .withArg(containerOS === 'windows' ? 'cmd /C' : '/bin/sh -c')
             .withQuotedArg(containerOS === 'windows' ? `IF EXIST "${debuggerPath}" (echo true) else (echo false)` : `if [ -f ${debuggerPath} ]; then echo true; fi;`)

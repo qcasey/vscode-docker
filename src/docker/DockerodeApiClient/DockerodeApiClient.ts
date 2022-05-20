@@ -7,12 +7,11 @@ import * as Dockerode from 'dockerode';
 import * as nodepath from 'path';
 import * as stream from 'stream';
 import * as tarstream from 'tar-stream';
+import { IActionContext, parseError } from '@microsoft/vscode-azext-utils';
 import { CancellationToken } from 'vscode';
-import { IActionContext, parseError } from 'vscode-azureextensionui';
 import { localize } from '../../localize';
 import { addDockerSettingsToEnv } from '../../utils/addDockerSettingsToEnv';
 import { cloneObject } from '../../utils/cloneObject';
-import { dockerExePath } from '../../utils/dockerExePathProvider';
 import { isWindows } from '../../utils/osUtils';
 import { bufferToString, execStreamAsync } from '../../utils/spawnAsync';
 import { DockerInfo, PruneResult } from '../Common';
@@ -25,6 +24,7 @@ import { DockerNetwork, DockerNetworkInspection, DriverType } from '../Networks'
 import { DockerVersion } from '../Version';
 import { DockerVolume, DockerVolumeInspection, VolumeInspectionContainers } from '../Volumes';
 import { getContainerName, getFullTagFromDigest, refreshDockerode } from './DockerodeUtils';
+import { ext } from '../../extensionVariables';
 
 // 20 s timeout for all calls (enough time for any call, but short enough to be UX-reasonable)
 const dockerodeCallTimeout = 20 * 1000;
@@ -76,7 +76,7 @@ export class DockerodeApiClient extends ContextChangeCancelClient implements Doc
         const commandProvider = Array.isArray(command) ? () => command : command;
 
         if (isWindows()) {
-            let dockerCommand = `${dockerExePath(context)} exec `;
+            let dockerCommand = `${ext.dockerContextManager.getDockerCommand(context)} exec `;
 
             if (options?.user) {
                 dockerCommand += `--user "${options.user}" `;
@@ -258,9 +258,9 @@ export class DockerodeApiClient extends ContextChangeCancelClient implements Doc
     public async getImages(context: IActionContext, includeDangling: boolean = false, token?: CancellationToken): Promise<DockerImage[]> {
         const filters = {};
         if (!includeDangling) {
-            filters['dangling'] = ["false"];
+            filters['dangling'] = ['false'];
         }
-        const images = await this.callWithErrorHandling(context, async () => this.dockerodeClient.listImages({ filters: filters }), token);
+        const images = await this.callWithErrorHandling(context, async () => this.dockerodeClient.listImages({ filters: JSON.stringify(filters) }), token);
         const result: DockerImage[] = [];
 
         for (const image of images) {

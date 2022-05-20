@@ -3,11 +3,11 @@
  *  Licensed under the MIT License. See LICENSE.md in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IActionContext } from 'vscode-azureextensionui';
-import { dockerExePath } from '../../utils/dockerExePathProvider';
+import { IActionContext } from '@microsoft/vscode-azext-utils';
+import { ext } from '../../extensionVariables';
 import { executeAsTask } from '../../utils/executeAsTask';
 
 export async function stats(context: IActionContext): Promise<void> {
     // Don't wait
-    void executeAsTask(context, `${dockerExePath(context)} stats`, 'docker stats', { addDockerEnv: true });
+    void executeAsTask(context, `${ext.dockerContextManager.getDockerCommand(context)} stats`, 'docker stats', { addDockerEnv: true });
 }

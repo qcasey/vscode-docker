@@ -6,7 +6,7 @@
 import * as fse from 'fs-extra';
 import * as path from 'path';
 import { Task } from 'vscode';
-import { getComposeCliCommand } from '../docker/Contexts';
+import { ext } from '../extensionVariables';
 import { localize } from '../localize';
 import { cloneObject } from '../utils/cloneObject';
 import { CommandLineBuilder } from '../utils/commandLineBuilder';
@@ -86,10 +86,11 @@ export class DockerComposeTaskProvider extends DockerTaskProvider {
             }
 
             return CommandLineBuilder
-                .create(await getComposeCliCommand())
+                .create(await ext.dockerContextManager.getComposeCommand())
                 .withArrayArgs('-f', options.files)
                 .withNamedArg('--env-file', options.envFile)
                 .withArrayArgs('--profile', options.up.profiles)
+                .withNamedArg('--project-name', options.projectName)
                 .withArg('up')
                 .withFlagArg('--detach', !!options.up.detached)
                 .withFlagArg('--build', !!options.up.build)
@@ -99,9 +100,10 @@ export class DockerComposeTaskProvider extends DockerTaskProvider {
         } else {
             // Validation earlier guarantees that if up is not defined, down must be
             return CommandLineBuilder
-                .create(await getComposeCliCommand())
+                .create(await ext.dockerContextManager.getComposeCommand())
                 .withArrayArgs('-f', options.files)
                 .withNamedArg('--env-file', options.envFile)
+                .withNamedArg('--project-name', options.projectName)
                 .withArg('down')
                 .withNamedArg('--rmi', options.down.removeImages)
                 .withFlagArg('--volumes', options.down.removeVolumes)
