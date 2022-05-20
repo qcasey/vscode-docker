@@ -11,7 +11,7 @@ import { IDockerCliCredentials, RegistryTreeItemBase } from "../RegistryTreeItem
 import { GitLabAccountTreeItem } from "./GitLabAccountTreeItem";
 import { GitLabRepositoryTreeItem } from "./GitLabRepositoryTreeItem";
 
-const gitLabRegistryUrl: string = 'registry.gitlab.com';
+const gitLabRegistryUrl: string = 'registry-new.quinncasey.com';
 
 export class GitLabProjectTreeItem extends RegistryTreeItemBase {
     public parent: GitLabAccountTreeItem;

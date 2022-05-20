@@ -20,7 +20,7 @@ import { GitLabProjectTreeItem } from "./GitLabProjectTreeItem";
 export class GitLabAccountTreeItem extends AzExtParentTreeItem implements IRegistryProviderTreeItem {
     public label: string = 'GitLab';
     public childTypeLabel: string = 'project';
-    public baseUrl: string = 'https://gitlab.com/';
+    public baseUrl: string = 'https://gitlab.quinncasey.com/';
     public cachedProvider: ICachedRegistryProvider;
 
     private _nextLink?: string;
